@@ -1,0 +1,566 @@
+"use client";
+import { FormEvent, useEffect, useState, useRef } from "react";
+import Link from "next/link";
+import {
+  Copy,
+  ExternalLink,
+  Play,
+  LockKeyhole,
+  Sparkles,
+  Flag,
+  Plus,
+  Trash2,
+  Pencil,
+  X,
+  Users,
+  Flame,
+  Check,
+} from "lucide-react";
+import type { Round } from "@/lib/types";
+import {
+  api,
+  ErrorBox,
+  Header,
+  Leaderboard,
+  Live,
+  Loading,
+  ScreenLink,
+  useCountdown,
+  useGame,
+} from "./shared";
+type Draft = {
+  question: string;
+  options: { label: string; odds: string }[];
+  correct: number;
+  explanation: string;
+  duration: number;
+};
+const empty = (): Draft => ({
+  question: "",
+  options: [
+    { label: "", odds: "2" },
+    { label: "", odds: "3" },
+    { label: "", odds: "4" },
+  ],
+  correct: 0,
+  explanation: "",
+  duration: 45,
+});
+export function HostControl({ code }: { code: string }) {
+  const { state, error, refresh, offset } = useGame(code, true);
+  const [actionError, setActionError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Draft>(empty);
+  const [origin, setOrigin] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [finishConfirm, setFinishConfirm] = useState(false);
+  const dialogRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!editing) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const dialog = dialogRef.current;
+    const selector =
+      'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex="0"]';
+    dialog?.querySelector<HTMLElement>("#question")?.focus();
+    function keydown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setEditing(null);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const elements = Array.from(
+        dialog?.querySelectorAll<HTMLElement>(selector) || [],
+      );
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      }
+      if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    }
+    document.addEventListener("keydown", keydown);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", keydown);
+      document.body.style.overflow = overflow;
+      previous?.focus();
+    };
+  }, [editing]);
+  const seconds = useCountdown(state?.round?.closes_at, offset);
+  useEffect(() => setOrigin(window.location.origin), []);
+  async function action(action: string, roundId?: string, data?: unknown) {
+    setBusy(true);
+    setActionError("");
+    try {
+      await api(`/api/games/${code}/action`, { action, roundId, data });
+      await refresh();
+      return true;
+    } catch (e) {
+      setActionError((e as Error).message);
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+  function edit(round?: Round) {
+    setEditing(round?.id || "new");
+    setDraft(
+      round
+        ? {
+            question: round.question,
+            options: round.options.map((o) => ({
+              label: o.label,
+              odds: String(o.odds / 100),
+            })),
+            correct: round.correct ?? 0,
+            explanation: round.explanation || "",
+            duration: round.duration,
+          }
+        : empty(),
+    );
+  }
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    const data = {
+      ...draft,
+      options: draft.options.map((o) => ({
+        label: o.label,
+        odds: Math.round(Number(o.odds) * 100),
+      })),
+    };
+    if (
+      await action(
+        editing === "new" ? "add" : "edit",
+        editing === "new" ? undefined : editing!,
+        data,
+      )
+    )
+      setEditing(null);
+  }
+  const round = state?.round;
+  const active = round && round.status !== "revealed";
+  const open = round?.status === "open" && seconds > 0;
+  const finished = state?.game.status === "finished";
+  return (
+    <>
+      <Header>
+        <Link className="muted small" href="/host">
+          Alle Sessions
+        </Link>
+        <ScreenLink code={code} />
+      </Header>
+      <main className="control-shell">
+        <ErrorBox error={error || actionError} />
+        {!state ? (
+          <Loading />
+        ) : !state.host ? (
+          <section className="panel form-panel">
+            <h2>Host-Sitzung abgelaufen</h2>
+            <Link className="button" href="/host">
+              Erneut anmelden
+            </Link>
+          </section>
+        ) : (
+          <>
+            <div className="control-heading">
+              <div>
+                <span className="eyebrow">HOST CONTROL / {code}</span>
+                <h1>{state.game.title}</h1>
+              </div>
+              <Live label={finished ? "BEENDET" : "YOU’RE IN CONTROL"} />
+            </div>
+            <div className="control-grid">
+              <section className="control-main">
+                <div className="panel control-active">
+                  <div className="section-label">
+                    {finished
+                      ? "SESSION BEENDET"
+                      : active
+                        ? "AKTUELLE RUNDE"
+                        : round
+                          ? "RUNDE AUFGELÖST"
+                          : "BEREIT FÜR DIE ERSTE RUNDE"}
+                    <span>
+                      {open ? `${seconds}s` : active ? "BETS CLOSED" : ""}
+                    </span>
+                  </div>
+                  <h2>{round?.question || "Der Tisch ist offen."}</h2>
+                  <p className="muted">
+                    {finished
+                      ? "Die finale Rangliste ist auf dem Game Screen sichtbar."
+                      : active
+                        ? "Du kannst jetzt zu Slides oder Demos wechseln. Das Spiel läuft weiter."
+                        : "Öffne eine vorbereitete Frage, sobald das nächste Thema beginnt."}
+                  </p>
+                  {round && (
+                    <div className="host-answer">
+                      <Check size={17} /> Lösung:{" "}
+                      {round.options[round.correct ?? 0]?.label}
+                      <small>Nur für dich sichtbar</small>
+                    </div>
+                  )}
+                  <div className="control-buttons">
+                    {open && (
+                      <button
+                        className="button secondary"
+                        disabled={busy}
+                        onClick={() => void action("lock")}
+                      >
+                        <LockKeyhole size={17} /> Wetten schliessen
+                      </button>
+                    )}
+                    {active && !open && (
+                      <button
+                        className="button"
+                        disabled={busy}
+                        onClick={() => void action("reveal")}
+                      >
+                        <Sparkles size={18} /> Auflösen & auszahlen
+                      </button>
+                    )}
+                    {!active && !finished && (
+                      <span className="fine">
+                        Wähle unten die nächste Runde.
+                      </span>
+                    )}
+                  </div>
+                  <div className="host-stats">
+                    <span>
+                      <Users size={16} />
+                      {state.playerCount} Players
+                    </span>
+                    <span>{state.betCount} Wetten</span>
+                    <span>
+                      <Flame size={16} />
+                      {state.allInCount} All-in
+                    </span>
+                  </div>
+                </div>
+                <div className="list-heading">
+                  <h2>
+                    Dein Run of Show{" "}
+                    <span className="muted">({state.rounds?.length})</span>
+                  </h2>
+                  {!finished && (
+                    <button
+                      className="button secondary small"
+                      disabled={busy}
+                      onClick={() => edit()}
+                    >
+                      <Plus size={16} /> Frage
+                    </button>
+                  )}
+                </div>
+                <div className="round-list">
+                  {!state.rounds?.length && (
+                    <div className="panel empty">
+                      Noch keine Fragen. Erstelle deine erste Wette.
+                    </div>
+                  )}
+                  {state.rounds?.map((item) => (
+                    <div
+                      className={`panel round-row ${item.id === round?.id ? "current" : ""}`}
+                      key={item.id}
+                    >
+                      <span className="round-number">
+                        {String(item.position).padStart(2, "0")}
+                      </span>
+                      <div className="round-description">
+                        <b>{item.question}</b>
+                        <small>
+                          {item.duration}s · {item.options.length} Antworten ·{" "}
+                          {item.status === "draft"
+                            ? "Vorbereitet"
+                            : item.status === "revealed"
+                              ? "Aufgelöst"
+                              : "Aktiv"}
+                        </small>
+                      </div>
+                      {item.status === "draft" && !finished && (
+                        <div className="row-actions">
+                          <button
+                            className="icon-button"
+                            aria-label="Frage bearbeiten"
+                            disabled={busy}
+                            onClick={() => edit(item)}
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            className="icon-button"
+                            aria-label="Ungespielte Frage löschen"
+                            disabled={busy}
+                            onClick={() => void action("delete", item.id)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                          <button
+                            className="button small"
+                            disabled={busy || !!active}
+                            onClick={() => void action("open", item.id)}
+                          >
+                            <Play size={14} /> Öffnen
+                          </button>
+                        </div>
+                      )}
+                      {item.status === "revealed" && (
+                        <Check className="positive" size={20} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {!finished && (
+                  <div className="finish-section">
+                    {finishConfirm ? (
+                      <>
+                        <p>
+                          Session endgültig beenden? Ungespielte Fragen werden
+                          übersprungen.
+                        </p>
+                        <button
+                          className="button danger"
+                          disabled={busy || !!active}
+                          onClick={() => void action("finish")}
+                        >
+                          Ja, finale Rangliste zeigen
+                        </button>
+                        <button
+                          className="button secondary"
+                          onClick={() => setFinishConfirm(false)}
+                        >
+                          Abbrechen
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        className="button secondary small"
+                        disabled={busy || !!active}
+                        onClick={() => setFinishConfirm(true)}
+                      >
+                        <Flag size={15} /> Session beenden
+                      </button>
+                    )}
+                  </div>
+                )}
+              </section>
+              <aside>
+                <section className="panel form-panel">
+                  <span className="section-label">DEINE SESSION-LINKS</span>
+                  <label>Spielcode</label>
+                  <div className="room-code">{code}</div>
+                  <button
+                    className="button secondary full"
+                    onClick={() => {
+                      void navigator.clipboard
+                        .writeText(`${origin}/play/${code}`)
+                        .then(() => {
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        })
+                        .catch(() =>
+                          setActionError(
+                            "Kopieren nicht möglich. Nutze den Teilnahme-Link darunter.",
+                          ),
+                        );
+                    }}
+                  >
+                    <Copy size={16} />
+                    {copied ? "Link kopiert!" : "Teilnahme-Link kopieren"}
+                  </button>
+                  <Link
+                    className="text-link"
+                    href={`/play/${code}`}
+                    target="_blank"
+                  >
+                    Teilnahme öffnen <ExternalLink size={14} />
+                  </Link>
+                  <Link
+                    className="text-link"
+                    href={`/screen/${code}`}
+                    target="_blank"
+                  >
+                    Beamer-Screen öffnen <ExternalLink size={14} />
+                  </Link>
+                  <p className="fine">
+                    Teile den Game Screen im Meeting. Dieses Control Panel
+                    enthält die Lösungen.
+                  </p>
+                </section>
+                <Leaderboard state={state} />
+                <section className="host-tips">
+                  <b>Dein Ablauf</b>
+                  <p>
+                    ① Wette öffnen
+                    <br />② Einsätze schliessen
+                    <br />③ Slides oder Demo zeigen
+                    <br />④ Zurückkommen & auflösen
+                  </p>
+                  <p className="fine">
+                    Alle starten mit 1’000 Coins. Einmaliger Bailout bei 0:
+                    +300. Pro Runde ein verbindlicher Einsatz.
+                  </p>
+                </section>
+              </aside>
+            </div>
+          </>
+        )}
+        {editing && (
+          <div className="modal-backdrop">
+            <section
+              ref={dialogRef}
+              className="modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="editor-title"
+            >
+              <div className="list-heading">
+                <h2 id="editor-title">
+                  {editing === "new" ? "Neue Wette" : "Wette bearbeiten"}
+                </h2>
+                <button
+                  className="icon-button"
+                  aria-label="Schliessen"
+                  onClick={() => setEditing(null)}
+                >
+                  <X />
+                </button>
+              </div>
+              <ErrorBox error={actionError} />
+              <form onSubmit={save}>
+                <label htmlFor="question">Frage</label>
+                <textarea
+                  id="question"
+                  value={draft.question}
+                  minLength={5}
+                  maxLength={240}
+                  required
+                  onChange={(e) =>
+                    setDraft({ ...draft, question: e.target.value })
+                  }
+                />
+                <div className="editor-labels">
+                  <span>Antworten · richtige Antwort markieren</span>
+                  <span>Quote ×</span>
+                </div>
+                {draft.options.map((answer, index) => (
+                  <div className="editor-option" key={index}>
+                    <input
+                      type="radio"
+                      name="correct"
+                      aria-label={`Antwort ${String.fromCharCode(65 + index)} ist richtig`}
+                      checked={draft.correct === index}
+                      onChange={() => setDraft({ ...draft, correct: index })}
+                    />
+                    <input
+                      aria-label={`Antwort ${String.fromCharCode(65 + index)}`}
+                      value={answer.label}
+                      required
+                      maxLength={120}
+                      placeholder={`Antwort ${String.fromCharCode(65 + index)}`}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          options: draft.options.map((o, i) =>
+                            i === index ? { ...o, label: e.target.value } : o,
+                          ),
+                        })
+                      }
+                    />
+                    <input
+                      aria-label={`Quote für Antwort ${String.fromCharCode(65 + index)}`}
+                      type="number"
+                      min={1.1}
+                      max={20}
+                      step={0.1}
+                      required
+                      value={answer.odds}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          options: draft.options.map((o, i) =>
+                            i === index ? { ...o, odds: e.target.value } : o,
+                          ),
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+                <div className="editor-actions">
+                  {draft.options.length < 4 && (
+                    <button
+                      type="button"
+                      className="button secondary small"
+                      onClick={() =>
+                        setDraft({
+                          ...draft,
+                          options: [...draft.options, { label: "", odds: "3" }],
+                        })
+                      }
+                    >
+                      + Antwort
+                    </button>
+                  )}
+                  {draft.options.length > 2 && (
+                    <button
+                      type="button"
+                      className="button secondary small"
+                      onClick={() =>
+                        setDraft({
+                          ...draft,
+                          options: draft.options.slice(0, -1),
+                          correct: Math.min(
+                            draft.correct,
+                            draft.options.length - 2,
+                          ),
+                        })
+                      }
+                    >
+                      Letzte entfernen
+                    </button>
+                  )}
+                </div>
+                <label htmlFor="duration">
+                  Wettfenster in Sekunden (15–300)
+                </label>
+                <input
+                  id="duration"
+                  type="number"
+                  min={15}
+                  max={300}
+                  required
+                  value={draft.duration}
+                  onChange={(e) =>
+                    setDraft({ ...draft, duration: Number(e.target.value) })
+                  }
+                />
+                <label htmlFor="explanation">Auflösung / Kontext</label>
+                <textarea
+                  id="explanation"
+                  maxLength={600}
+                  value={draft.explanation}
+                  placeholder="Zum Beispiel: Tatsächlich waren es 187 Deployments."
+                  onChange={(e) =>
+                    setDraft({ ...draft, explanation: e.target.value })
+                  }
+                />
+                <p className="fine">
+                  Quote × 3: 100 Coins Einsatz ergeben bei Gewinn 300 Coins
+                  Auszahlung. Quoten bleiben während der Runde fest.
+                </p>
+                <button className="button full" disabled={busy}>
+                  {busy ? "Wird gespeichert …" : "Wette speichern"}
+                </button>
+              </form>
+            </section>
+          </div>
+        )}
+      </main>
+    </>
+  );
+}
