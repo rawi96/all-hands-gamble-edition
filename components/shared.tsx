@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { Brand } from "./brand";
 import { Coins, Radio, Crown, Volume2, VolumeX } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { Avatar, AnimatedCoins } from "./effects";
@@ -86,16 +86,7 @@ export function useCountdown(
       )
     : 0;
 }
-export function Brand() {
-  return (
-    <Link href="/" className="brand">
-      <span className="brand-mark">
-        <Coins size={21} />
-      </span>
-      ALL HANDS<span className="brand-sub">CASINO</span>
-    </Link>
-  );
-}
+export { Brand } from "./brand";
 export function Header({ children }: { children?: React.ReactNode }) {
   return (
     <header className="header">
@@ -140,7 +131,7 @@ export function Leaderboard({
         <Crown size={16} /> LEADERBOARD <span>{state.playerCount} Players</span>
       </div>
       {!state.playerCount && (
-        <div className="empty">Die ersten High Roller sind gleich da.</div>
+        <div className="empty">Die ersten Mitspieler:innen sind gleich da.</div>
       )}
       {state.leaderboard.slice(0, limit).map((player, index) => (
         <motion.div

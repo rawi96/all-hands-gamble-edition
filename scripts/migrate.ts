@@ -13,23 +13,24 @@ try {
   await client.query(
     "CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())",
   );
-  const name = "001-init";
-  if (
-    !(
-      await client.query("SELECT name FROM schema_migrations WHERE name=$1", [
+  for (const name of ["001-init", "002-open-hosting"]) {
+    if (
+      !(
+        await client.query("SELECT name FROM schema_migrations WHERE name=$1", [
+          name,
+        ])
+      ).rowCount
+    ) {
+      await client.query(
+        await readFile(
+          fileURLToPath(new URL(`./${name}.sql`, import.meta.url)),
+          "utf8",
+        ),
+      );
+      await client.query("INSERT INTO schema_migrations(name) VALUES($1)", [
         name,
-      ])
-    ).rowCount
-  ) {
-    await client.query(
-      await readFile(
-        fileURLToPath(new URL("./001-init.sql", import.meta.url)),
-        "utf8",
-      ),
-    );
-    await client.query("INSERT INTO schema_migrations(name) VALUES($1)", [
-      name,
-    ]);
+      ]);
+    }
   }
   await client.query("COMMIT");
   console.log("Migrations applied.");

@@ -1,3 +1,4 @@
+export const metadata = { robots: { index: false, follow: false } };
 import { Play } from "@/components/play";
 export default async function Page({
   params,

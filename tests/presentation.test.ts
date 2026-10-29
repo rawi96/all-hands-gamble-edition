@@ -9,7 +9,7 @@ import type { Snapshot } from "../lib/types";
 
 const state: Snapshot = {
   serverTime: 1000,
-  game: { code: "ABC234", title: "All Hands", status: "playing" },
+  game: { code: "ABC234", title: "Betoot Quiz", status: "playing" },
   round: {
     id: "current",
     position: 1,

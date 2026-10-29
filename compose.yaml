@@ -2,16 +2,16 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: casino
-      POSTGRES_PASSWORD: casino
-      POSTGRES_DB: casino
+      POSTGRES_USER: betoot
+      POSTGRES_PASSWORD: betoot
+      POSTGRES_DB: betoot
     ports:
       - "5432:5432"
     volumes:
-      - casino-data:/var/lib/postgresql/data
+      - betoot-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U casino"]
+      test: ["CMD-SHELL", "pg_isready -U betoot"]
       interval: 3s
       retries: 10
 volumes:
-  casino-data:
+  betoot-data:

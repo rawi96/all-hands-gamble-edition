@@ -1,7 +1,7 @@
 {
-  "name": "all-hands-casino",
-  "version": "1.0.0",
-  "description": "A hybrid all-hands casino game with virtual coins, Next.js and PostgreSQL",
+  "name": "betoot",
+  "version": "2.0.0",
+  "description": "Betoot: create and play live quiz games without an account.",
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "next build --webpack",
@@ -13,6 +13,8 @@
   "license": "UNLICENSED",
   "type": "module",
   "dependencies": {
+    "@fontsource-variable/dm-sans": "^5.3.0",
+    "@fontsource-variable/fredoka": "^5.3.0",
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.64.0",
     "motion": "^14.8.0",

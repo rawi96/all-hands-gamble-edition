@@ -73,7 +73,7 @@ export function Play({ code }: { code: string }) {
               ? round.id
               : undefined
         }
-        jackpot={
+        bigCelebration={
           state?.game.status === "finished" ||
           (state?.bet?.payout ?? 0) >= (state?.bet?.stake ?? 1) * 4
         }
@@ -90,7 +90,7 @@ export function Play({ code }: { code: string }) {
           <Loading />
         ) : !state.me ? (
           <section className="panel join-player">
-            <span className="eyebrow">WELCOME TO THE TABLE</span>
+            <span className="eyebrow">SCHÖN, DASS DU DABEI BIST!</span>
             <h1>{state.game.title}</h1>
             {state.game.status === "finished" ? (
               <p>Diese Session ist beendet.</p>
@@ -148,7 +148,7 @@ export function Play({ code }: { code: string }) {
             {state.game.status === "finished" ? (
               <section className="panel result-panel">
                 <Trophy size={44} />
-                <span className="eyebrow">THAT’S A WRAP</span>
+                <span className="eyebrow">GROSS GESPIELT!</span>
                 <h1>{state.leaderboard[0]?.name} gewinnt!</h1>
                 <Podium players={state.leaderboard} ownId={state.me.id} />
                 <p>
@@ -158,12 +158,12 @@ export function Play({ code }: { code: string }) {
               </section>
             ) : !round ? (
               <section className="panel waiting">
-                <span className="large-symbol">♠</span>
-                <h2>Dein Platz ist reserviert.</h2>
+                <span className="large-symbol">✦</span>
+                <h2>Du bist dabei!</h2>
                 <p className="muted">
-                  Lehn dich zurück. Die erste Wette kommt gleich.
+                  Lehn dich zurück. Die erste Frage kommt gleich.
                 </p>
-                <Live label={`${state.playerCount} AM TISCH`} />
+                <Live label={`${state.playerCount} DABEI`} />
               </section>
             ) : (
               <section className="panel bet-panel" key={round.id}>
@@ -178,7 +178,7 @@ export function Play({ code }: { code: string }) {
                       ? "REVEAL"
                       : open
                         ? `${seconds}s`
-                        : "BETS CLOSED"}
+                        : "EINSÄTZE STEHEN"}
                   </span>
                 </div>
                 <h1 className="question">{round.question}</h1>
@@ -224,7 +224,7 @@ export function Play({ code }: { code: string }) {
                         >
                           {state.bet.payout
                             ? `+${money(state.bet.payout)} Coins ausgezahlt!`
-                            : "Dieses Mal gewinnt die Bank."}
+                            : "Dieses Mal war es eine andere Antwort."}
                         </span>
                         <p>{round.explanation}</p>
                         <small>
@@ -311,7 +311,7 @@ export function Play({ code }: { code: string }) {
                   disabled={busy}
                   onClick={() => void action("bailout")}
                 >
-                  <LifeBuoy size={18} /> Einmaliger Bailout: +300 Coins
+                  <LifeBuoy size={18} /> Einmaliges Comeback: +300 Coins
                 </button>
               )}
             <Leaderboard state={state} />

@@ -29,7 +29,7 @@ export function GameBoard({
       <RoundTransition state={state} />
       <Celebration
         trigger={finished ? "finale" : reveal ? round?.id : undefined}
-        jackpot={finished}
+        bigCelebration={finished}
       />
       <div className="ambient-orb orb-a" />
       <div className="ambient-orb orb-b" />
@@ -38,24 +38,22 @@ export function GameBoard({
           {finished ? (
             <div className="finale">
               <Trophy size={76} />
-              <span className="eyebrow">THE HOUSE HAS A WINNER.</span>
-              <h1 className="finale-title">THE HIGH ROLLERS.</h1>
+              <span className="eyebrow">DAS IST EUER MOMENT.</span>
+              <h1 className="finale-title">DIE TOP 3!</h1>
               <Podium players={state.leaderboard} />
-              <p>
-                Grosse Einsätze. Grosse Geschichten. Bis zum nächsten All Hands.
-              </p>
+              <p>Gut geraten. Mutig gesetzt. Gemeinsam gefeiert.</p>
             </div>
           ) : !round ? (
             <div className="lobby-stage">
-              <span className="eyebrow">THE TABLE IS OPEN</span>
+              <span className="eyebrow">EURE RUNDE WARTET</span>
               <h1>
-                TAKE A SEAT.
+                ALLE DABEI?
                 <br />
-                <span>MAKE YOUR BET.</span>
+                <span>DANN LOS!</span>
               </h1>
-              <p>1’000 Coins. Ein Team. Alles kann passieren.</p>
+              <p>1’000 Coins. Deine Antwort. Alles ist drin.</p>
               <div className="lobby-game-badge">
-                🎰 DEIN TEAM. DEIN EINSATZ. DEIN MOMENT.
+                ✦ DEIN WISSEN. DEIN GEFÜHL. DEIN MOMENT.
               </div>
               <div className="lobby-stats">
                 <Users size={23} />
@@ -75,7 +73,11 @@ export function GameBoard({
                 <span
                   className={`timer large ${open && seconds <= 5 ? "urgent" : ""} ${open ? "" : "closed"}`}
                 >
-                  {reveal ? "THE REVEAL" : open ? `${seconds}s` : "BETS CLOSED"}
+                  {reveal
+                    ? "DIE AUFLÖSUNG"
+                    : open
+                      ? `${seconds}s`
+                      : "EINSÄTZE STEHEN"}
                 </span>
               </div>
               <h1>{round.question}</h1>
@@ -133,7 +135,7 @@ export function GameBoard({
         </section>
         <aside className="screen-sidebar">
           <section className="panel qr-panel">
-            <span className="section-label">JOIN THE TABLE</span>
+            <span className="section-label">SPIEL MIT!</span>
             {origin && (
               <div className="qr">
                 <QRCodeSVG
@@ -144,7 +146,11 @@ export function GameBoard({
               </div>
             )}
             <div className="room-code">{code}</div>
-            <p className="fine">QR scannen oder Code eingeben</p>
+            <p className="fine">
+              {!round && !finished
+                ? "QR scannen oder Code eingeben"
+                : "Code auf der Startseite eingeben"}
+            </p>
             {origin && (
               <a className="join-url" href={`${origin}/play/${code}`}>
                 {origin.replace(/^https?:\/\//, "")}
@@ -152,7 +158,7 @@ export function GameBoard({
             )}
           </section>
           {state && <Leaderboard state={state} limit={5} />}
-          <p className="fine center">VIRTUAL COINS. REAL TEAM SPIRIT.</p>
+          <p className="fine center">ZUSAMMEN MACHT’S BETOOT.</p>
         </aside>
       </div>
     </div>

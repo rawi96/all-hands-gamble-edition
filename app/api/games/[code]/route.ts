@@ -1,4 +1,4 @@
-import { isHost, playerHash } from "@/lib/auth";
+import { creatorHash, playerHash } from "@/lib/auth";
 import { snapshot } from "@/lib/game";
 import { handle } from "@/lib/http";
 export const runtime = "nodejs";
@@ -12,7 +12,9 @@ export async function GET(
     return snapshot(
       code,
       await playerHash(code),
-      new URL(request.url).searchParams.get("host") === "1" && (await isHost()),
+      new URL(request.url).searchParams.get("host") === "1"
+        ? await creatorHash()
+        : null,
     );
   });
 }

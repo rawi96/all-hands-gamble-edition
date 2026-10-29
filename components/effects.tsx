@@ -34,7 +34,7 @@ export function AvatarPicker({
 }) {
   return (
     <fieldset className="avatar-fieldset">
-      <legend>CHOOSE YOUR ALTER EGO</legend>
+      <legend>SUCH DIR DEIN SPIEL-ICH AUS</legend>
       <div className="avatar-picker">
         {avatars.map((avatar) => (
           <motion.button
@@ -83,10 +83,10 @@ export function AnimatedCoins({ amount }: { amount: number }) {
 }
 export function Celebration({
   trigger,
-  jackpot = false,
+  bigCelebration = false,
 }: {
   trigger: string | undefined;
-  jackpot?: boolean;
+  bigCelebration?: boolean;
 }) {
   const reduced = useReducedMotion();
   const fired = useRef<string | undefined>(undefined);
@@ -97,7 +97,7 @@ export function Celebration({
     void import("canvas-confetti").then(({ default: confetti }) => {
       if (cancelled) return;
       void confetti({
-        particleCount: jackpot ? 180 : 90,
+        particleCount: bigCelebration ? 180 : 90,
         spread: 95,
         origin: { y: 0.65 },
         colors: ["#d7f75b", "#b89aff", "#ff8b93", "#82bcff", "#ffffff"],
@@ -108,7 +108,7 @@ export function Celebration({
     return () => {
       cancelled = true;
     };
-  }, [trigger, jackpot, reduced]);
+  }, [trigger, bigCelebration, reduced]);
   return null;
 }
 export function Podium({
@@ -147,10 +147,10 @@ export function Podium({
               <span>{rank === 1 ? "♛" : `0${rank}`}</span>
               <small>
                 {rank === 1
-                  ? "THE HIGH ROLLER"
+                  ? "QUIZ-LEGENDE"
                   : rank === 2
-                    ? "SO CLOSE"
-                    : "BIG MOVES"}
+                    ? "STARK GESPIELT"
+                    : "GROSSES KINO"}
               </small>
             </div>
           </motion.div>
@@ -193,13 +193,13 @@ export function RoundTransition({ state }: { state: Snapshot }) {
     previous.current = key;
     const text =
       phase === "open"
-        ? "PLACE YOUR BETS"
+        ? "SETZT AUF EURE ANTWORT!"
         : phase === "locked"
-          ? "NO MORE BETS"
+          ? "EINSÄTZE STEHEN!"
           : phase === "revealed"
-            ? "THE REVEAL"
+            ? "DIE AUFLÖSUNG!"
             : phase === "finished"
-              ? "THE FINAL TABLE"
+              ? "EUER FINALE!"
               : null;
     setSplash(text);
     const timer = setTimeout(() => setSplash(null), 1500);
@@ -219,9 +219,9 @@ export function RoundTransition({ state }: { state: Snapshot }) {
             animate={{ scale: 1, rotate: -3 }}
             transition={{ type: "spring", stiffness: 160, damping: 18 }}
           >
-            <span>♠ ♦ ♣ ♥</span>
+            <span>▲ ◆ ● ✦</span>
             <strong>{splash}</strong>
-            <small>ALL HANDS CASINO</small>
+            <small>BETOOT</small>
           </motion.div>
         </motion.div>
       )}
@@ -243,14 +243,14 @@ export function ResultBanner({
       transition={{ type: "spring", stiffness: 200, damping: 15 }}
     >
       <span className="result-emoji">
-        {payout > 0 ? (payout >= stake * 4 ? "💎" : "🤑") : "🫠"}
+        {payout > 0 ? (payout >= stake * 4 ? "💎" : "🥳") : "🫠"}
       </span>
       <span className="eyebrow">
         {payout > 0
           ? payout >= stake * 4
-            ? "JACKPOT ENERGY"
-            : "WINNER WINNER"
-          : "THE COMEBACK STARTS NOW"}
+            ? "VOLLTREFFER!"
+            : "GUT GESETZT!"
+          : "NEUE RUNDE. NEUE CHANCE."}
       </span>
       <strong>
         {payout > 0 ? `+${money(payout)}` : `−${money(stake)}`}{" "}

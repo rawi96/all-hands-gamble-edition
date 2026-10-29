@@ -47,7 +47,13 @@ const empty = (): Draft => ({
   explanation: "",
   duration: 45,
 });
-export function HostControl({ code }: { code: string }) {
+export function HostControl({
+  code,
+  startInPreparation = false,
+}: {
+  code: string;
+  startInPreparation?: boolean;
+}) {
   const { state, error, refresh, offset } = useGame(code, true);
   const [actionError, setActionError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -55,7 +61,7 @@ export function HostControl({ code }: { code: string }) {
   const [draft, setDraft] = useState<Draft>(empty);
   const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
-  const [preparing, setPreparing] = useState(false);
+  const [preparing, setPreparing] = useState(startInPreparation);
   const dialogRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!editing) return;
@@ -151,7 +157,7 @@ export function HostControl({ code }: { code: string }) {
     <>
       <Header>
         <Link className="muted small" href="/host">
-          Alle Sessions
+          Meine Spiele
         </Link>
         <button
           className={`button secondary small ${preparing ? "" : "active-mode"}`}
@@ -196,9 +202,9 @@ export function HostControl({ code }: { code: string }) {
           <Loading />
         ) : !state.host ? (
           <section className="panel form-panel">
-            <h2>Host-Sitzung abgelaufen</h2>
+            <h2>Hier hast du keine Spielleitung</h2>
             <Link className="button" href="/host">
-              Erneut anmelden
+              Eigenes Spiel erstellen
             </Link>
           </section>
         ) : !preparing ? (
@@ -228,16 +234,16 @@ export function HostControl({ code }: { code: string }) {
             </div>
             <div className="control-heading">
               <div>
-                <span className="eyebrow">HOST CONTROL / {code}</span>
+                <span className="eyebrow">SPIELLEITUNG / {code}</span>
                 <h1>{state.game.title}</h1>
               </div>
-              <Live label={finished ? "BEENDET" : "YOU’RE IN CONTROL"} />
+              <Live label={finished ? "BEENDET" : "DEINE RUNDE"} />
             </div>
             <div className="control-grid">
               <section className="control-main">
                 <div className="list-heading">
                   <h2>
-                    Dein Run of Show{" "}
+                    Deine Fragen{" "}
                     <span className="muted">({state.rounds?.length})</span>
                   </h2>
                   {!finished && (
@@ -366,7 +372,7 @@ export function HostControl({ code }: { code: string }) {
                     <br />④ Zurückkommen & auflösen
                   </p>
                   <p className="fine">
-                    Alle starten mit 1’000 Coins. Einmaliger Bailout bei 0:
+                    Alle starten mit 1’000 Coins. Einmaliges Comeback bei 0:
                     +300. Pro Runde ein verbindlicher Einsatz.
                   </p>
                 </section>

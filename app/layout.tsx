@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
+import "@fontsource-variable/dm-sans";
+import "@fontsource-variable/fredoka";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 export const metadata: Metadata = {
-  title: "All Hands Casino",
+  title: {
+    default: "Betoot – Wissen trifft Bauchkribbeln.",
+    template: "%s · Betoot",
+  },
   description:
-    "Turn your next all hands into a high-stakes game night. Virtual coins. Real team spirit.",
-  robots: { index: false, follow: false },
+    "Dein Quiz wird zur Spielshow. Spiel erstellen oder mit Code beitreten – ohne Anmeldung. Mit Avataren, virtuellen Coins und grossen Aha-Momenten.",
+  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  robots: { index: true, follow: true },
 };
 export default function RootLayout({
   children,

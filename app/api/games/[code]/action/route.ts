@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { requireHost } from "@/lib/auth";
+import { creatorHash } from "@/lib/auth";
 import { hostAction, roundSchema } from "@/lib/game";
 import { body, handle, sameOrigin } from "@/lib/http";
 export const runtime = "nodejs";
@@ -9,7 +9,6 @@ export async function POST(
 ) {
   return handle(async () => {
     sameOrigin(request);
-    await requireHost();
     const { code } = await context.params;
     const input = await body(
       request,
@@ -27,6 +26,12 @@ export async function POST(
         data: roundSchema.optional(),
       }),
     );
-    return hostAction(code, input.action, input.roundId, input.data);
+    return hostAction(
+      code,
+      await creatorHash(),
+      input.action,
+      input.roundId,
+      input.data,
+    );
   });
 }

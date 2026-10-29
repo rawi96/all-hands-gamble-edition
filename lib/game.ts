@@ -24,37 +24,36 @@ export const roundSchema = z
 export type RoundInput = z.infer<typeof roundSchema>;
 const examples: RoundInput[] = [
   {
-    question: "Wie viele Deployments hatten wir dieses Quartal?",
+    question: "Wie viele Minuten hat ein Tag?",
     options: [
-      { label: "Unter 100", odds: 400 },
-      { label: "100 bis 250", odds: 200 },
-      { label: "Über 250", odds: 300 },
+      { label: "720 Minuten", odds: 400 },
+      { label: "1’440 Minuten", odds: 200 },
+      { label: "2’880 Minuten", odds: 300 },
     ],
     correct: 1,
-    explanation:
-      "Demo: 187 Deployments. Ersetze diese Werte vor deinem All Hands.",
+    explanation: "24 Stunden × 60 Minuten = 1’440 Minuten.",
     duration: 45,
   },
   {
-    question: "Welches Kundenfeedback ist wirklich bei uns angekommen?",
+    question: "Welche Farbe entsteht, wenn man blaue und gelbe Farbe mischt?",
     options: [
-      { label: "Das spart uns jede Woche einen Tag.", odds: 250 },
-      { label: "Könnt ihr das bitte faxen?", odds: 500 },
-      { label: "Der Dark Mode macht uns schneller.", odds: 300 },
+      { label: "Grün", odds: 250 },
+      { label: "Violett", odds: 500 },
+      { label: "Orange", odds: 300 },
     ],
     correct: 0,
-    explanation: "Demo-Frage mit erfundenem Feedback.",
+    explanation: "Beim Mischen von blauer und gelber Malfarbe entsteht Grün.",
     duration: 45,
   },
   {
-    question: "Wie viele neue Kolleg:innen starten im nächsten Quartal?",
+    question: "Welcher Planet ist der Sonne am nächsten?",
     options: [
-      { label: "Eine Person", odds: 400 },
-      { label: "Drei Personen", odds: 200 },
-      { label: "Fünf Personen", odds: 350 },
+      { label: "Venus", odds: 400 },
+      { label: "Merkur", odds: 200 },
+      { label: "Mars", odds: 350 },
     ],
     correct: 1,
-    explanation: "Demo-Antwort. Unbedingt mit euren echten Zahlen ersetzen.",
+    explanation: "Merkur ist der innerste Planet unseres Sonnensystems.",
     duration: 45,
   },
 ];
@@ -63,7 +62,7 @@ async function lockedGame(client: PoolClient, code: string) {
     "SELECT * FROM games WHERE code=$1 FOR UPDATE",
     [normalizeCode(code)],
   );
-  ensure(result.rows[0], "Session nicht gefunden.", 404);
+  ensure(result.rows[0], "Spiel nicht gefunden.", 404);
   return result.rows[0];
 }
 async function addRound(client: PoolClient, gameId: string, data: RoundInput) {
@@ -85,7 +84,12 @@ async function addRound(client: PoolClient, gameId: string, data: RoundInput) {
     ],
   );
 }
-export async function createGame(title: string, demo: boolean) {
+export async function createGame(
+  title: string,
+  demo: boolean,
+  ownerHash: string,
+) {
+  ensure(/^[a-f0-9]{64}$/.test(ownerHash), "Spiel-Identität fehlt.", 401);
   return transaction(async (client) => {
     const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     // ON CONFLICT keeps the transaction usable in the unlikely event of a code collision.
@@ -98,8 +102,8 @@ export async function createGame(title: string, demo: boolean) {
       ).join("");
       id = randomUUID();
       const result = await client.query(
-        "INSERT INTO games(id,code,title) VALUES($1,$2,$3) ON CONFLICT(code) DO NOTHING",
-        [id, code, title],
+        "INSERT INTO games(id,code,title,owner_hash) VALUES($1,$2,$3,$4) ON CONFLICT(code) DO NOTHING",
+        [id, code, title, ownerHash],
       );
       if (result.rowCount) break;
       ensure(
@@ -112,10 +116,12 @@ export async function createGame(title: string, demo: boolean) {
     return { code };
   });
 }
-export async function listGames() {
+export async function listGames(ownerHash: string | null) {
+  if (!ownerHash) return [];
   return (
     await db().query(
-      "SELECT code,title,status,created_at FROM games ORDER BY created_at DESC LIMIT 50",
+      "SELECT code,title,status,created_at FROM games WHERE owner_hash=$1 ORDER BY created_at DESC LIMIT 50",
+      [ownerHash],
     )
   ).rows;
 }
@@ -135,7 +141,7 @@ export async function joinGame(
       );
       if (existing.rowCount) return { resumed: true };
     }
-    ensure(game.status !== "finished", "Diese Session ist beendet.");
+    ensure(game.status !== "finished", "Dieses Spiel ist beendet.");
     const count = await client.query(
       "SELECT COUNT(*)::int AS n FROM players WHERE game_id=$1",
       [game.id],
@@ -214,7 +220,7 @@ export async function placeBet(
 export async function bailout(code: string, tokenHash: string | null) {
   return transaction(async (client) => {
     const game = await lockedGame(client, code);
-    ensure(game.status !== "finished", "Diese Session ist beendet.");
+    ensure(game.status !== "finished", "Dieses Spiel ist beendet.");
     const player = (
       await client.query(
         "SELECT * FROM players WHERE game_id=$1 AND token_hash=$2",
@@ -240,13 +246,19 @@ export async function bailout(code: string, tokenHash: string | null) {
 }
 export async function hostAction(
   code: string,
+  ownerHash: string | null,
   action: string,
   roundId?: string,
   data?: RoundInput,
 ) {
   return transaction(async (client) => {
     const game = await lockedGame(client, code);
-    ensure(game.status !== "finished", "Diese Session ist beendet.");
+    ensure(
+      ownerHash && game.owner_hash === ownerHash,
+      "Du hast für dieses Spiel keine Spielleitung.",
+      403,
+    );
+    ensure(game.status !== "finished", "Dieses Spiel ist beendet.");
     if (action === "add") {
       const count = await client.query(
         "SELECT COUNT(*)::int AS n FROM rounds WHERE game_id=$1",
@@ -387,7 +399,7 @@ function publicRound(round: Round, host: boolean): Round {
 export async function snapshot(
   code: string,
   tokenHash: string | null,
-  host: boolean,
+  ownerHash: string | null,
 ): Promise<Snapshot> {
   return transaction(async (client) => {
     // Every mutation takes the exclusive game lock. This shared lock makes this multi-query snapshot consistent.
@@ -396,7 +408,8 @@ export async function snapshot(
         normalizeCode(code),
       ])
     ).rows[0];
-    ensure(game, "Session nicht gefunden.", 404);
+    ensure(game, "Spiel nicht gefunden.", 404);
+    const host = !!ownerHash && game.owner_hash === ownerHash;
     const rounds = (
       await client.query(
         "SELECT * FROM rounds WHERE game_id=$1 ORDER BY position",
