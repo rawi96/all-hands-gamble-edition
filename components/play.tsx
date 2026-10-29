@@ -1,4 +1,6 @@
 "use client";
+import { GameAudio } from "./game-audio";
+import { GameAtmosphere, RoundProgress } from "./game-atmosphere";
 import { FormEvent, useState } from "react";
 import {
   Avatar,
@@ -61,7 +63,8 @@ export function Play({ code }: { code: string }) {
     seconds > 0 &&
     state?.game.status !== "finished";
   return (
-    <>
+    <div className="player-game">
+      <GameAtmosphere />
       <Celebration
         trigger={
           state?.game.status === "finished"
@@ -76,6 +79,7 @@ export function Play({ code }: { code: string }) {
         }
       />
       <Header>
+        <GameAudio state={state} seconds={seconds} role="player" />
         <Live
           label={state?.game.status === "finished" ? "SESSION BEENDET" : code}
         />
@@ -178,6 +182,11 @@ export function Play({ code }: { code: string }) {
                   </span>
                 </div>
                 <h1 className="question">{round.question}</h1>
+                <RoundProgress
+                  seconds={seconds}
+                  duration={round.duration}
+                  running={!!open}
+                />
                 <div className="options">
                   {round.options.map((answer, index) => {
                     const correct =
@@ -312,6 +321,6 @@ export function Play({ code }: { code: string }) {
           </>
         )}
       </main>
-    </>
+    </div>
   );
 }

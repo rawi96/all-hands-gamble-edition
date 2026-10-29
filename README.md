@@ -8,8 +8,9 @@ Ein hybrides All-Hands-Spiel mit Next.js, React und PostgreSQL. Alle starten mit
 
 - **12 Avatare** mit animierter Auswahl und sichtbarer Lobby-Crew.
 - **Player am Handy:** Antworten, feste Quoten, Einsätze von 50/100/250 oder All-in, animierter Kontostand und persönliche Gewinnanzeige.
-- **Host = Bühne + Steuerung:** QR-Code, Join-Code, Countdown, farbige Antwortkarten, Rundenübergänge, Konfetti, optionaler Reveal-Sound und Vollbild. Alles in einem Tab mit kompakter Steuerleiste.
+- **Host = Bühne + Steuerung:** QR-Code, Join-Code, Countdown, kräftige Antwortkacheln, Countdown-Leiste, animierte Formen, Rundenübergänge, Konfetti und Vollbild. Alles in einem Tab mit kompakter Steuerleiste.
 - **Private Vorbereitung:** Auf derselben Host-Seite zwischen „Live-Spiel“ und „Vorbereitung (privat)“ wechseln. Fragen hinzufügen/bearbeiten/löschen und Lösungen festlegen. Im Live-Spiel sind keine zukünftigen Fragen oder unrevealten Lösungen sichtbar.
+- **Originale Spielsounds:** Lobby-Musik, schnellerer Wett-Loop, Chip-Klicks, die letzten zehn Countdown-Ticks, Reveal-Jingle und Podium-Fanfare. Sound und Musik separat steuerbar.
 - **Finale:** animiertes Top-3-Podium mit Avataren, Krone und Rangliste.
 - **Reconnect:** Spieleridentität in einem HttpOnly-Cookie, Spielzustand dauerhaft in PostgreSQL. Ein Reload verliert den Einsatz nicht.
 - Drei klar als erfunden markierte Demo-Fragen, vor dem Einsatz bearbeiten.
@@ -94,6 +95,17 @@ Du brauchst weder ein zweites Display noch ein separates Control Panel. Auf der 
 
 Remote-Spieler:innen werden nicht nach Geschwindigkeit bewertet. 45–60 Sekunden Wettfenster sind ein guter Start. Beim Testen mehrerer Spieler auf demselben Rechner getrennte Browserprofile verwenden: Tabs desselben Profils teilen die Spieleridentität.
 
+### Sound & Bewegung
+
+- Der Host aktiviert **Sound** einmal per Klick. Dadurch wird die Audioausgabe im Browser freigegeben.
+- Der separate Musik-Button stoppt nur die Hintergrundmelodie; Spiel-Effekte bleiben aktiv.
+- Die Lobby hat eine ruhige, eigene Melodie. Während einer offenen Wette läuft ein schnelleres Muster, in den letzten zehn Sekunden kommen Countdown-Töne dazu.
+- Nach dem Schliessen der Wette stoppt die Hintergrundmusik. So kannst du die Slides oder Demo kommentieren.
+- Beim Wechsel in einen anderen Tab verstummt die Audioausgabe automatisch. Auf der Host-Seite geht sie weiter, solange Musik/Sound aktiviert sind und die Runde läuft.
+- Teilnehmer können eigene Einsatz- und Ergebnis-Sounds aktivieren. Ihre Geräte spielen keine Hintergrundmusik ab.
+- Die Sounds werden lokal mit Web Audio synthetisiert. Keine Audio-Downloads oder übernommenen Kahoot-Aufnahmen.
+- Reduzierte Bewegung wird respektiert: schwebende Formen, Pulsen und Konfetti werden bei entsprechender Systemeinstellung deaktiviert.
+
 ## Spielregeln
 
 - Startguthaben: **1’000 Coins**; ein verbindlicher Einsatz je Person und Runde.
@@ -139,7 +151,7 @@ CI führt Tests und Production-Build aus. Der Build braucht keine Datenbank-Verb
 
 - Fragen als JSON importieren/exportieren
 - Finalrunde mit frei eingebbarem Einsatz
-- Teammodus und mehr Show-Sounds
+- Teammodus und zusätzliche Spielmodi
 - Mitarbeiter-SSO und getrennte Host-Berechtigungen, wenn es über interne Events hinausgeht
 
 Diese Erweiterungen sind nicht Bestandteil dieser Version.

@@ -17,7 +17,7 @@ import {
 import { GameBoard } from "./screen";
 import { HostDock } from "./host-dock";
 import { presentationState } from "@/lib/presentation";
-import { SoundToggle } from "./shared";
+import { GameAudio } from "./game-audio";
 import type { Round } from "@/lib/types";
 import {
   api,
@@ -170,11 +170,7 @@ export function HostControl({ code }: { code: string }) {
         </button>
         {!preparing && (
           <>
-            <SoundToggle
-              revealKey={
-                state?.round?.status === "revealed" ? state.round.id : undefined
-              }
-            />
+            <GameAudio state={state} seconds={seconds} />
             <button
               className="icon-button"
               aria-label="Vollbild"
