@@ -8,8 +8,8 @@ Ein hybrides All-Hands-Spiel mit Next.js, React und PostgreSQL. Alle starten mit
 
 - **12 Avatare** mit animierter Auswahl und sichtbarer Lobby-Crew.
 - **Player am Handy:** Antworten, feste Quoten, Einsätze von 50/100/250 oder All-in, animierter Kontostand und persönliche Gewinnanzeige.
-- **Game Screen:** QR-Code, Join-Code, Countdown, farbige Antwortkarten, Rundenübergänge, Konfetti, optionaler Reveal-Sound und Vollbild.
-- **Host Control:** Session erstellen, Fragen hinzufügen/bearbeiten/löschen, Wetten öffnen/schliessen, auflösen und Session beenden.
+- **Host = Bühne + Steuerung:** QR-Code, Join-Code, Countdown, farbige Antwortkarten, Rundenübergänge, Konfetti, optionaler Reveal-Sound und Vollbild. Alles in einem Tab mit kompakter Steuerleiste.
+- **Private Vorbereitung:** Auf derselben Host-Seite zwischen „Live-Spiel“ und „Vorbereitung (privat)“ wechseln. Fragen hinzufügen/bearbeiten/löschen und Lösungen festlegen. Im Live-Spiel sind keine zukünftigen Fragen oder unrevealten Lösungen sichtbar.
 - **Finale:** animiertes Top-3-Podium mit Avataren, Krone und Rangliste.
 - **Reconnect:** Spieleridentität in einem HttpOnly-Cookie, Spielzustand dauerhaft in PostgreSQL. Ein Reload verliert den Einsatz nicht.
 - Drei klar als erfunden markierte Demo-Fragen, vor dem Einsatz bearbeiten.
@@ -65,24 +65,32 @@ gh repo create all-hands-casino --private --source=. --remote=origin --push
 
 Alternativ ein leeres Repository in GitHub erstellen, dessen Remote hinzufügen und pushen.
 
-## Dein Ablauf im hybriden Meeting
+## Nur zwei Ansichten: Host und Teilnehmer
 
-| Ansicht        | URL              | Verwendung                                              |
-| -------------- | ---------------- | ------------------------------------------------------- |
-| Host-Übersicht | `/host`          | Sessions anlegen und wieder öffnen                      |
-| Control Panel  | `/host/ABC234`   | Nur auf deinem privaten Laptopdisplay: enthält Lösungen |
-| Game Screen    | `/screen/ABC234` | Auf dem Beamer und im Screensharing                     |
-| Teilnahme      | `/play/ABC234`   | Auf dem Handy oder in einem zweiten Browserfenster      |
+| Rolle          | URL            | Verwendung                                                                          |
+| -------------- | -------------- | ----------------------------------------------------------------------------------- |
+| **Host**       | `/host/ABC234` | Präsentation und Steuerung in einer Ansicht, direkt auf Beamer und im Screensharing |
+| **Teilnehmer** | `/play/ABC234` | Antworten und Coins auf dem Handy oder in einem Browserfenster                      |
 
-`ABC234` durch den generierten Code ersetzen. Der Host kann Teilnahme- und Screen-Links direkt öffnen/kopieren. Spieler:innen scannen den QR-Code oder geben auf der Startseite den Code ein.
+`/host` ist die Session-Übersicht vor dem Spiel. `ABC234` durch den generierten Code ersetzen. Alte `/screen/ABC234`-Bookmarks leiten auf die Host-Seite weiter; eine separate Beamer-Ansicht gibt es nicht mehr.
 
-1. Session mit echten Fragen vorbereiten, Quoten und richtige Antwort kontrollieren.
-2. Game Screen auf dem Präsentationsdisplay öffnen. Für den optionalen Sound den Lautsprecher-Button einmal aktivieren.
-3. Wette im Control Panel öffnen. Alle haben dasselbe serverseitige Zeitfenster.
-4. Wetten schliessen oder den Countdown abwarten.
-5. Zu Slides wechseln oder jemand anderem das Screensharing überlassen. Die Einsätze bleiben gespeichert.
-6. Game Screen zurückholen und im Control Panel **Auflösen & auszahlen** klicken.
-7. Für die finale Rangliste die Session beenden. Das ist endgültig; eine aktuelle Wette muss vorher aufgelöst sein.
+### Vor dem Meeting
+
+1. Session erstellen und auf derselben Seite **Vorbereitung (privat)** öffnen.
+2. Fragen, Quoten, richtige Antworten und Auflösungen vorbereiten.
+3. Auf **Live-Spiel** wechseln. Erst dann die Host-Seite auf Beamer und im Meeting teilen. Der Vorbereitungsmodus zeigt Lösungen und kommende Fragen – diesen Modus nicht teilen.
+4. Alle scannen den QR-Code und wählen ihren Avatar. Für Sound den Lautsprecher-Button einmal aktivieren; optional Vollbild einschalten.
+
+### Während des Meetings
+
+1. **Erste Wette öffnen**: Die Frage erscheint auf der Host-Bühne und allen Handys.
+2. **Wetten schliessen** oder den Countdown abwarten.
+3. Zu Slides wechseln oder jemand anderem das Screensharing überlassen. Die Einsätze bleiben gespeichert.
+4. Zur selben Host-Seite zurückkehren und **Auflösen & auszahlen** klicken.
+5. **Nächste Wette öffnen**, wenn das nächste Thema beginnt. Der Button verrät die kommende Frage noch nicht.
+6. Nach der letzten Wette **Finale starten**: animiertes Podium und finale Rangliste. Über **Zum Finale** können ungespielte Fragen nach Bestätigung übersprungen werden.
+
+Du brauchst weder ein zweites Display noch ein separates Control Panel. Auf der geteilten Live-Seite bleiben Lösungen bis zum Reveal verborgen. Wer die Host-Seite bedient, muss als Host angemeldet sein; Teilnehmer benötigen keinen Account.
 
 Remote-Spieler:innen werden nicht nach Geschwindigkeit bewertet. 45–60 Sekunden Wettfenster sind ein guter Start. Beim Testen mehrerer Spieler auf demselben Rechner getrennte Browserprofile verwenden: Tabs desselben Profils teilen die Spieleridentität.
 
@@ -123,7 +131,7 @@ npm run build
 npm run typecheck
 ```
 
-Die Tests nutzen **PGlite**, eine eingebettete PostgreSQL-Engine, und brauchen keine externe Datenbank. Sie prüfen den Ablauf, geheime Lösungen, Deadline-Verhalten, Guthaben, doppelte Einsätze, wiederholtes Reveal, Bailouts und Session-Isolation mit echtem SQL. PGlite hat eine einzelne Verbindung; der Testadapter serialisiert diese. Der Lock-Mechanismus unter mehreren echten PostgreSQL-Verbindungen ist damit nicht als Lasttest verifiziert.
+Die Tests nutzen **PGlite**, eine eingebettete PostgreSQL-Engine, und brauchen keine externe Datenbank. Sie prüfen den Ablauf, geheime Lösungen, Deadline-Verhalten, Guthaben, doppelte Einsätze, wiederholtes Reveal, Bailouts und Session-Isolation mit echtem SQL. Zusätzliche Render-Tests prüfen, dass die geteilte Host-Bühne keine kommenden Fragen oder geheimen Auflösungen vorwegnimmt. PGlite hat eine einzelne Verbindung; der Testadapter serialisiert diese. Der Lock-Mechanismus unter mehreren echten PostgreSQL-Verbindungen ist damit nicht als Lasttest verifiziert.
 
 CI führt Tests und Production-Build aus. Der Build braucht keine Datenbank-Verbindung.
 

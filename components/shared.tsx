@@ -1,14 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  Coins,
-  Radio,
-  ArrowUpRight,
-  Crown,
-  Volume2,
-  VolumeX,
-} from "lucide-react";
+import { Coins, Radio, Crown, Volume2, VolumeX } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { Avatar, AnimatedCoins } from "./effects";
 import { money } from "@/lib/format";
@@ -175,17 +168,6 @@ export function Leaderboard({
         Kontostand nach gebuchten Einsätzen · Gleichstand: alphabetisch.
       </p>
     </section>
-  );
-}
-export function ScreenLink({ code }: { code: string }) {
-  return (
-    <Link
-      className="button secondary small"
-      href={`/screen/${code}`}
-      target="_blank"
-    >
-      Game Screen <ArrowUpRight size={15} />
-    </Link>
   );
 }
 export function SoundToggle({ revealKey }: { revealKey?: string }) {

@@ -6,16 +6,18 @@ import {
   ExternalLink,
   Play,
   LockKeyhole,
-  Sparkles,
-  Flag,
   Plus,
   Trash2,
   Pencil,
   X,
-  Users,
-  Flame,
   Check,
+  Maximize,
+  MonitorPlay,
 } from "lucide-react";
+import { GameBoard } from "./screen";
+import { HostDock } from "./host-dock";
+import { presentationState } from "@/lib/presentation";
+import { SoundToggle } from "./shared";
 import type { Round } from "@/lib/types";
 import {
   api,
@@ -24,7 +26,6 @@ import {
   Leaderboard,
   Live,
   Loading,
-  ScreenLink,
   useCountdown,
   useGame,
 } from "./shared";
@@ -54,7 +55,7 @@ export function HostControl({ code }: { code: string }) {
   const [draft, setDraft] = useState<Draft>(empty);
   const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
-  const [finishConfirm, setFinishConfirm] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const dialogRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!editing) return;
@@ -145,7 +146,6 @@ export function HostControl({ code }: { code: string }) {
   }
   const round = state?.round;
   const active = round && round.status !== "revealed";
-  const open = round?.status === "open" && seconds > 0;
   const finished = state?.game.status === "finished";
   return (
     <>
@@ -153,9 +153,48 @@ export function HostControl({ code }: { code: string }) {
         <Link className="muted small" href="/host">
           Alle Sessions
         </Link>
-        <ScreenLink code={code} />
+        <button
+          className={`button secondary small ${preparing ? "" : "active-mode"}`}
+          onClick={() => {
+            setPreparing(false);
+            setEditing(null);
+          }}
+        >
+          <MonitorPlay size={15} /> Live-Spiel
+        </button>
+        <button
+          className={`button secondary small ${preparing ? "active-mode" : ""}`}
+          onClick={() => setPreparing(true)}
+        >
+          <Pencil size={15} /> Vorbereitung (privat)
+        </button>
+        {!preparing && (
+          <>
+            <SoundToggle
+              revealKey={
+                state?.round?.status === "revealed" ? state.round.id : undefined
+              }
+            />
+            <button
+              className="icon-button"
+              aria-label="Vollbild"
+              onClick={() => {
+                const task = document.fullscreenElement
+                  ? document.exitFullscreen()
+                  : document.documentElement.requestFullscreen();
+                void task.catch(() =>
+                  setActionError(
+                    "Vollbild ist in diesem Browser nicht verfügbar.",
+                  ),
+                );
+              }}
+            >
+              <Maximize size={18} />
+            </button>
+          </>
+        )}
       </Header>
-      <main className="control-shell">
+      <main className={preparing ? "control-shell" : "host-show"}>
         <ErrorBox error={error || actionError} />
         {!state ? (
           <Loading />
@@ -166,8 +205,31 @@ export function HostControl({ code }: { code: string }) {
               Erneut anmelden
             </Link>
           </section>
+        ) : !preparing ? (
+          <>
+            <GameBoard
+              state={presentationState(state)}
+              seconds={seconds}
+              origin={origin}
+            />
+            <HostDock
+              state={state}
+              seconds={seconds}
+              busy={busy}
+              action={action}
+              onPrepare={() => setPreparing(true)}
+            />
+          </>
         ) : (
           <>
+            <div className="private-preparation">
+              <LockKeyhole size={17} />
+              <b>PRIVATE VORBEREITUNG</b>
+              <span>
+                Hier sind Lösungen und kommende Fragen sichtbar. Vor dem Teilen
+                auf „Live-Spiel“ wechseln.
+              </span>
+            </div>
             <div className="control-heading">
               <div>
                 <span className="eyebrow">HOST CONTROL / {code}</span>
@@ -177,71 +239,6 @@ export function HostControl({ code }: { code: string }) {
             </div>
             <div className="control-grid">
               <section className="control-main">
-                <div className="panel control-active">
-                  <div className="section-label">
-                    {finished
-                      ? "SESSION BEENDET"
-                      : active
-                        ? "AKTUELLE RUNDE"
-                        : round
-                          ? "RUNDE AUFGELÖST"
-                          : "BEREIT FÜR DIE ERSTE RUNDE"}
-                    <span>
-                      {open ? `${seconds}s` : active ? "BETS CLOSED" : ""}
-                    </span>
-                  </div>
-                  <h2>{round?.question || "Der Tisch ist offen."}</h2>
-                  <p className="muted">
-                    {finished
-                      ? "Die finale Rangliste ist auf dem Game Screen sichtbar."
-                      : active
-                        ? "Du kannst jetzt zu Slides oder Demos wechseln. Das Spiel läuft weiter."
-                        : "Öffne eine vorbereitete Frage, sobald das nächste Thema beginnt."}
-                  </p>
-                  {round && (
-                    <div className="host-answer">
-                      <Check size={17} /> Lösung:{" "}
-                      {round.options[round.correct ?? 0]?.label}
-                      <small>Nur für dich sichtbar</small>
-                    </div>
-                  )}
-                  <div className="control-buttons">
-                    {open && (
-                      <button
-                        className="button secondary"
-                        disabled={busy}
-                        onClick={() => void action("lock")}
-                      >
-                        <LockKeyhole size={17} /> Wetten schliessen
-                      </button>
-                    )}
-                    {active && !open && (
-                      <button
-                        className="button"
-                        disabled={busy}
-                        onClick={() => void action("reveal")}
-                      >
-                        <Sparkles size={18} /> Auflösen & auszahlen
-                      </button>
-                    )}
-                    {!active && !finished && (
-                      <span className="fine">
-                        Wähle unten die nächste Runde.
-                      </span>
-                    )}
-                  </div>
-                  <div className="host-stats">
-                    <span>
-                      <Users size={16} />
-                      {state.playerCount} Players
-                    </span>
-                    <span>{state.betCount} Wetten</span>
-                    <span>
-                      <Flame size={16} />
-                      {state.allInCount} All-in
-                    </span>
-                  </div>
-                </div>
                 <div className="list-heading">
                   <h2>
                     Dein Run of Show{" "}
@@ -303,7 +300,11 @@ export function HostControl({ code }: { code: string }) {
                           <button
                             className="button small"
                             disabled={busy || !!active}
-                            onClick={() => void action("open", item.id)}
+                            onClick={() => {
+                              void action("open", item.id).then((ok) => {
+                                if (ok) setPreparing(false);
+                              });
+                            }}
                           >
                             <Play size={14} /> Öffnen
                           </button>
@@ -315,39 +316,6 @@ export function HostControl({ code }: { code: string }) {
                     </div>
                   ))}
                 </div>
-                {!finished && (
-                  <div className="finish-section">
-                    {finishConfirm ? (
-                      <>
-                        <p>
-                          Session endgültig beenden? Ungespielte Fragen werden
-                          übersprungen.
-                        </p>
-                        <button
-                          className="button danger"
-                          disabled={busy || !!active}
-                          onClick={() => void action("finish")}
-                        >
-                          Ja, finale Rangliste zeigen
-                        </button>
-                        <button
-                          className="button secondary"
-                          onClick={() => setFinishConfirm(false)}
-                        >
-                          Abbrechen
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        className="button secondary small"
-                        disabled={busy || !!active}
-                        onClick={() => setFinishConfirm(true)}
-                      >
-                        <Flag size={15} /> Session beenden
-                      </button>
-                    )}
-                  </div>
-                )}
               </section>
               <aside>
                 <section className="panel form-panel">
@@ -380,16 +348,16 @@ export function HostControl({ code }: { code: string }) {
                   >
                     Teilnahme öffnen <ExternalLink size={14} />
                   </Link>
-                  <Link
-                    className="text-link"
-                    href={`/screen/${code}`}
-                    target="_blank"
+                  <button
+                    className="button full"
+                    style={{ marginTop: 20 }}
+                    onClick={() => setPreparing(false)}
                   >
-                    Beamer-Screen öffnen <ExternalLink size={14} />
-                  </Link>
+                    <MonitorPlay size={17} /> Zurück zum Live-Spiel
+                  </button>
                   <p className="fine">
-                    Teile den Game Screen im Meeting. Dieses Control Panel
-                    enthält die Lösungen.
+                    Eine Host-Ansicht für Steuerung und Beamer. Im Live-Spiel
+                    bleiben Lösungen bis zum Reveal verborgen.
                   </p>
                 </section>
                 <Leaderboard state={state} />

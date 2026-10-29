@@ -1,62 +1,37 @@
 "use client";
-import { useEffect, useState } from "react";
 import { Celebration, Podium, LobbyWall, RoundTransition } from "./effects";
 import { QRCodeSVG } from "qrcode.react";
-import { Check, Maximize, Users, Flame, Trophy } from "lucide-react";
-import {
-  ErrorBox,
-  Header,
-  Leaderboard,
-  Live,
-  Loading,
-  money,
-  SoundToggle,
-  useCountdown,
-  useGame,
-} from "./shared";
-export function Screen({ code }: { code: string }) {
-  const { state, error, offset } = useGame(code);
-  const [origin, setOrigin] = useState("");
-  const [screenError, setScreenError] = useState("");
-  useEffect(() => setOrigin(window.location.origin), []);
-  const round = state?.round;
-  const seconds = useCountdown(round?.closes_at, offset);
+import { Check, Users, Flame, Trophy } from "lucide-react";
+import type { Snapshot } from "@/lib/types";
+import { Leaderboard } from "./shared";
+
+// This component receives only the public projection of the host state.
+export function GameBoard({
+  state,
+  seconds,
+  origin,
+}: {
+  state: Snapshot;
+  seconds: number;
+  origin: string;
+}) {
+  const code = state.game.code;
+  const round = state.round;
   const open = round?.status === "open" && seconds > 0;
   const reveal = round?.status === "revealed";
-  const finished = state?.game.status === "finished";
+  const finished = state.game.status === "finished";
   return (
-    <div className="screen">
-      {state && <RoundTransition state={state} />}
+    <div className="screen host-board">
+      <RoundTransition state={state} />
       <Celebration
         trigger={finished ? "finale" : reveal ? round?.id : undefined}
         jackpot={finished}
       />
       <div className="ambient-orb orb-a" />
       <div className="ambient-orb orb-b" />
-      <Header>
-        <Live label={state?.game.title || "LIVE SESSION"} />
-        <SoundToggle revealKey={reveal ? round?.id : undefined} />
-        <button
-          className="icon-button"
-          aria-label="Vollbild"
-          onClick={() => {
-            const action = document.fullscreenElement
-              ? document.exitFullscreen()
-              : document.documentElement.requestFullscreen();
-            void action.catch(() =>
-              setScreenError("Vollbild ist in diesem Browser nicht verfügbar."),
-            );
-          }}
-        >
-          <Maximize size={19} />
-        </button>
-      </Header>
-      <main className="screen-layout">
+      <div className="screen-layout">
         <section className="stage">
-          <ErrorBox error={error || screenError} />
-          {!state ? (
-            <Loading />
-          ) : finished ? (
+          {finished ? (
             <div className="finale">
               <Trophy size={76} />
               <span className="eyebrow">THE HOUSE HAS A WINNER.</span>
@@ -167,7 +142,7 @@ export function Screen({ code }: { code: string }) {
           {state && <Leaderboard state={state} limit={7} />}
           <p className="fine center">VIRTUAL COINS. REAL TEAM SPIRIT.</p>
         </aside>
-      </main>
+      </div>
     </div>
   );
 }
