@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AvatarArt } from "./avatar-art";
 import { getAvatar, avatars } from "@/lib/avatars";
 import type { Player, Snapshot } from "@/lib/types";
 import { money } from "@/lib/format";
@@ -21,7 +22,7 @@ export function Avatar({
       aria-label={avatar.name}
     >
       {crowned && <span className="avatar-crown">👑</span>}
-      <span className="avatar-emoji">{avatar.emoji}</span>
+      <AvatarArt id={avatar.id} />
     </span>
   );
 }
@@ -35,6 +36,7 @@ export function AvatarPicker({
   return (
     <fieldset className="avatar-fieldset">
       <legend>SUCH DIR DEIN SPIEL-ICH AUS</legend>
+      <p className="avatar-picker-hint">36 schräge Figuren · scroll für mehr</p>
       <div className="avatar-picker">
         {avatars.map((avatar) => (
           <motion.button
@@ -121,7 +123,7 @@ export function Podium({
   const reduced = useReducedMotion();
   const top = [players[1], players[0], players[2]];
   return (
-    <div className="podium" aria-label="Finales Podium">
+    <div className="podium" aria-label="Podium der Top 3">
       {top.map((player, column) => {
         if (!player) return <div key={column} className="podium-placeholder" />;
         const rank = column === 1 ? 1 : column === 0 ? 2 : 3;

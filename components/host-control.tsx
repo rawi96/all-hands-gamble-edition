@@ -61,6 +61,7 @@ export function HostControl({
   const [draft, setDraft] = useState<Draft>(empty);
   const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
+  const [standingsRound, setStandingsRound] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(startInPreparation);
   const dialogRef = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -176,7 +177,11 @@ export function HostControl({
         </button>
         {!preparing && (
           <>
-            <GameAudio state={state} seconds={seconds} />
+            <GameAudio
+              state={state}
+              seconds={seconds}
+              standings={standingsRound === round?.id}
+            />
             <button
               className="icon-button"
               aria-label="Vollbild"
@@ -213,6 +218,7 @@ export function HostControl({
               state={presentationState(state)}
               seconds={seconds}
               origin={origin}
+              showStandings={standingsRound === round?.id}
             />
             <HostDock
               state={state}
@@ -220,6 +226,8 @@ export function HostControl({
               busy={busy}
               action={action}
               onPrepare={() => setPreparing(true)}
+              showStandings={standingsRound === round?.id}
+              onStandings={() => setStandingsRound(round?.id || null)}
             />
           </>
         ) : (

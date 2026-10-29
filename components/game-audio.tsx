@@ -15,10 +15,12 @@ export function GameAudio({
   state,
   seconds,
   role = "host",
+  standings = false,
 }: {
   state: Snapshot | null;
   seconds: number;
   role?: "host" | "player";
+  standings?: boolean;
 }) {
   const engine = useRef<AudioEngine | null>(null);
   const [enabled, setEnabled] = useState(false);
@@ -29,6 +31,7 @@ export function GameAudio({
     tick: "",
     players: 0,
     bets: 0,
+    allIns: 0,
     ownBet: "",
     result: "",
   });
@@ -37,11 +40,13 @@ export function GameAudio({
     ? "loading"
     : state.game.status === "finished"
       ? "podium"
-      : !round
-        ? "lobby"
-        : round.status === "open" && seconds <= 0
-          ? "locked"
-          : round.status;
+      : standings && round?.status === "revealed"
+        ? "standings"
+        : !round
+          ? "lobby"
+          : round.status === "open" && seconds <= 0
+            ? "locked"
+            : round.status;
 
   function tones(notes: Tone[]) {
     const audio = engine.current;
@@ -120,7 +125,7 @@ export function GameAudio({
     const previous = last.current;
     if (enabled) {
       if (previous.phase && previous.phase !== key) {
-        if (phase === "podium") cue("podium");
+        if (phase === "podium" || phase === "standings") cue("podium");
         else if (role === "host" && phase === "open") cue("open");
         else if (role === "host" && phase === "locked") cue("lock");
         else if (role === "host" && phase === "revealed") cue("reveal");
@@ -138,9 +143,9 @@ export function GameAudio({
         state.betCount > previous.bets &&
         previous.phase === key
       )
-        cue("chip");
+        cue(state.allInCount > previous.allIns ? "allin" : "chip");
       if (role === "player" && betKey && previous.ownBet !== betKey)
-        cue("chip");
+        cue(state.allInCount > previous.allIns ? "allin" : "chip");
       if (role === "player" && resultKey && previous.result !== resultKey)
         cue(state.bet!.payout ? "win" : "loss");
       const tickKey = `${round?.id}:${seconds}`;
@@ -157,6 +162,7 @@ export function GameAudio({
     previous.phase = key;
     previous.players = state.playerCount;
     previous.bets = state.betCount;
+    previous.allIns = state.allInCount;
     previous.ownBet = betKey;
     previous.result = resultKey;
   }, [state, phase, round?.id, enabled, role, seconds]);

@@ -36,6 +36,17 @@ export type Snapshot = {
   playerCount: number;
   betCount: number;
   allInCount: number;
+  hostStats?: {
+    totalStake: number;
+    // Host-only activity, deliberately without answer choices.
+    recentBets: {
+      id: string;
+      name: string;
+      avatar: string;
+      stake: number;
+      allIn: boolean;
+    }[];
+  };
   me: Player | null;
   bet: Bet | null;
   host: boolean;

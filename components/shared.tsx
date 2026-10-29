@@ -53,7 +53,8 @@ export function useGame(code: string, host = false) {
     let timer: ReturnType<typeof setTimeout>;
     async function tick() {
       await refresh();
-      if (!cancelled) timer = setTimeout(tick, document.hidden ? 5000 : 1800);
+      if (!cancelled)
+        timer = setTimeout(tick, document.hidden ? 5000 : host ? 800 : 1800);
     }
     void tick();
     const onFocus = () => {
@@ -66,7 +67,7 @@ export function useGame(code: string, host = false) {
       clearTimeout(timer);
       window.removeEventListener("focus", onFocus);
     };
-  }, [refresh]);
+  }, [refresh, host]);
   return { state, error, refresh, offset };
 }
 export function useCountdown(

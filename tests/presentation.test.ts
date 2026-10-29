@@ -95,8 +95,65 @@ test("host navigation never previews the next question on the shared screen", ()
       busy: false,
       action: async () => true,
       onPrepare: () => {},
+      showStandings: true,
     }),
   );
   assert.ok(html.includes("Nächste Wette öffnen"));
   assert.ok(!html.includes("SECRET_"));
+});
+
+test("question stage shows activity without a persistent leaderboard", () => {
+  const live = presentationState({
+    ...state,
+    playerCount: 3,
+    betCount: 2,
+    allInCount: 1,
+    hostStats: {
+      totalStake: 1250,
+      recentBets: [
+        {
+          id: "bet-1",
+          name: "Maya",
+          avatar: "pickle",
+          stake: 1000,
+          allIn: true,
+        },
+      ],
+    },
+  });
+  const html = renderToStaticMarkup(
+    createElement(GameBoard, { state: live, seconds: 20, origin: "" }),
+  );
+  assert.ok(html.includes("COINS IM SPIEL"));
+  assert.ok(html.includes("Maya"));
+  assert.ok(html.includes("ALL IN!"));
+  assert.ok(!html.includes('class="leaderboard'));
+  assert.ok(!html.includes('class="podium"'));
+});
+test("standings are a separate interlude after reveal, never during open voting", () => {
+  const props = { seconds: 0, origin: "", showStandings: true };
+  const open = renderToStaticMarkup(
+    createElement(GameBoard, { ...props, state: presentationState(state) }),
+  );
+  assert.ok(!open.includes("Wer ist jetzt vorne?"));
+  const revealed = presentationState({
+    ...state,
+    round: { ...state.round!, status: "revealed" },
+  });
+  const html = renderToStaticMarkup(
+    createElement(GameBoard, { ...props, state: revealed }),
+  );
+  assert.ok(html.includes("Wer ist jetzt vorne?"));
+  assert.ok(!html.includes("Öffentliche Frage?"));
+  const dock = renderToStaticMarkup(
+    createElement(HostDock, {
+      state: revealed,
+      seconds: 0,
+      busy: false,
+      action: async () => true,
+      onPrepare: () => {},
+    }),
+  );
+  assert.ok(dock.includes("Zwischenstand zeigen"));
+  assert.ok(!dock.includes("Nächste Wette öffnen"));
 });

@@ -107,8 +107,14 @@ npm run typecheck
 
 - PostgreSQL-Transaktionen und eine Session-Sperre serialisieren Einsätze und Auszahlungen.
 - Öffentliche Snapshots enthalten weder zukünftige Fragen noch unrevealte Lösungen oder Token-Hashes.
-- Polling: etwa alle 1.8 Sekunden nach Abschluss der letzten Anfrage, in versteckten Tabs 5 Sekunden.
+- Polling: beim Host alle 800 ms, bei Mitspielenden alle 1.8 Sekunden nach Abschluss der letzten Anfrage; in versteckten Tabs 5 Sekunden.
 - Tests verwenden PGlite mit echtem SQL. Der einzelne Test-Adapter serialisiert Verbindungen; er ersetzt keinen Mehrverbindungs-Lasttest gegen PostgreSQL.
 - CI führt Tests und Production-Build aus.
 
 Eine Session erlaubt maximal 300 Teilnehmer und 50 Fragen. Das ist eine Eingabegrenze, keine verifizierte Kapazitätszusage. Vor grösseren Veranstaltungen mit eurer erwarteten Gruppengrösse auf der Ziel-Infrastruktur testen.
+
+### Shared-screen show
+
+The host polls every 800 ms after the previous request completes (players: 1.8 s; hidden tabs: 5 s). Host-only activity includes total committed Coins, counts and the last five named bets with no answer choices. The shared screen shows the latest three arrivals, animated counters and participation progress. It never shows answer distribution while voting. All-ins have a separate sound cue when sound is enabled.
+
+After reveal, the host chooses **Zwischenstand zeigen** for an animated Top 3 interlude, then opens the next question or the finale. Standings presentation is local to that host browser, with no extra game state or migration. The shared stage has no persistent leaderboard; phones show only their own rank and result. 36 original SVG avatars share the same IDs across joins, lobby and podium; original IDs remain compatible.

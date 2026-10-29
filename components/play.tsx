@@ -7,7 +7,6 @@ import {
   AvatarPicker,
   AnimatedCoins,
   Celebration,
-  Podium,
   ResultBanner,
 } from "./effects";
 import {
@@ -22,7 +21,6 @@ import {
   api,
   ErrorBox,
   Header,
-  Leaderboard,
   Live,
   Loading,
   money,
@@ -150,7 +148,11 @@ export function Play({ code }: { code: string }) {
                 <Trophy size={44} />
                 <span className="eyebrow">GROSS GESPIELT!</span>
                 <h1>{state.leaderboard[0]?.name} gewinnt!</h1>
-                <Podium players={state.leaderboard} ownId={state.me.id} />
+                <p className="phone-result-rank">
+                  Dein Platz: #
+                  {state.leaderboard.findIndex((p) => p.id === state.me!.id) +
+                    1}
+                </p>
                 <p>
                   Dein Ergebnis: <b>{money(state.me.balance)} Coins</b>. Danke
                   fürs Mitspielen.
@@ -166,7 +168,10 @@ export function Play({ code }: { code: string }) {
                 <Live label={`${state.playerCount} DABEI`} />
               </section>
             ) : (
-              <section className="panel bet-panel" key={round.id}>
+              <section
+                className={`panel bet-panel ${state.bet && round.status !== "revealed" ? "submitted" : ""}`}
+                key={round.id}
+              >
                 <div className="round-meta">
                   <span className="eyebrow">
                     RUNDE {round.position} / {state.roundCount}
@@ -238,8 +243,8 @@ export function Play({ code }: { code: string }) {
                         <Check size={19} />
                         <strong>{money(state.bet.stake)} Coins gesetzt.</strong>
                         <p>
-                          Dein Einsatz steht. Jetzt das Update verfolgen und
-                          mitfiebern.
+                          Dein Tipp steht. Schau auf den grossen Screen und
+                          fiebere mit.
                         </p>
                       </>
                     )}
@@ -314,7 +319,7 @@ export function Play({ code }: { code: string }) {
                   <LifeBuoy size={18} /> Einmaliges Comeback: +300 Coins
                 </button>
               )}
-            <Leaderboard state={state} />
+
             <p className="fine center">
               Nur virtuelle Coins. Gewinne sind nicht auszahlbar.
             </p>

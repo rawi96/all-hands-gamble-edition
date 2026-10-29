@@ -136,6 +136,30 @@ test("full game lifecycle, hidden answers, settlement and invalid actions", asyn
       await assert.rejects(bailout(game.code, "token-luca"));
     },
   );
+  await t.test(
+    "host activity totals count each bet once and expose no chosen answers",
+    async () => {
+      const host = await snapshot(game.code, null, owner);
+      assert.equal(host.betCount, 2);
+      assert.equal(host.allInCount, 1);
+      assert.equal(host.hostStats!.totalStake, 1250);
+      assert.equal(host.hostStats!.recentBets.length, 2);
+      assert.equal(
+        host.hostStats!.recentBets.find((b) => b.name === "Luca")?.allIn,
+        true,
+      );
+      assert.ok(!JSON.stringify(host.hostStats).includes("option_index"));
+      assert.ok(!JSON.stringify(host.hostStats).includes("token"));
+      assert.equal(
+        (await snapshot(game.code, "token-maya", null)).hostStats,
+        undefined,
+      );
+      assert.equal(
+        (await snapshot(game.code, null, otherOwner)).hostStats,
+        undefined,
+      );
+    },
+  );
   await hostAction(game.code, owner, "lock");
   await t.test(
     "closed bets fail; reveal credits once even after retry",
@@ -165,6 +189,11 @@ test("full game lifecycle, hidden answers, settlement and invalid actions", asyn
     "server deadline rejects bets without a host close action",
     async () => {
       await hostAction(game.code, owner, "open", initial.rounds![1].id);
+      const fresh = await snapshot(game.code, null, owner);
+      assert.equal(fresh.betCount, 0);
+      assert.equal(fresh.allInCount, 0);
+      assert.equal(fresh.hostStats!.totalStake, 0);
+      assert.deepEqual(fresh.hostStats!.recentBets, []);
       await engine.query(
         "UPDATE rounds SET closes_at=clock_timestamp()-interval '1 second' WHERE id=$1",
         [initial.rounds![1].id],

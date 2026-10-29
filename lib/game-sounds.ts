@@ -1,6 +1,7 @@
 export type SoundCue =
   | "join"
   | "open"
+  | "allin"
   | "chip"
   | "tick"
   | "lock"
@@ -29,6 +30,8 @@ export function cueTones(cue: SoundCue, urgency = 0): Tone[] {
         { hz: 1400, at: 0, duration: 0.035, volume: 0.035 },
         { hz: 2100, at: 0.055, duration: 0.05, volume: 0.025 },
       ];
+    case "allin":
+      return melody([196, 392, 587.33, 783.99], 0.065, 0.18);
     case "tick":
       return [
         {

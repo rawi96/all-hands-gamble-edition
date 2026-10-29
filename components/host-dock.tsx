@@ -17,8 +17,18 @@ type Props = {
   busy: boolean;
   action: (action: string, roundId?: string) => Promise<boolean>;
   onPrepare: () => void;
+  showStandings?: boolean;
+  onStandings?: () => void;
 };
-export function HostDock({ state, seconds, busy, action, onPrepare }: Props) {
+export function HostDock({
+  state,
+  seconds,
+  busy,
+  action,
+  onPrepare,
+  showStandings = false,
+  onStandings,
+}: Props) {
   const [confirmFinish, setConfirmFinish] = useState(false);
   const round = state.round;
   const active = round && round.status !== "revealed";
@@ -32,7 +42,9 @@ export function HostDock({ state, seconds, busy, action, onPrepare }: Props) {
       : active
         ? "Einsätze stehen. Zeit fürs Update."
         : round
-          ? "Coins verteilt. Bereit für die nächste Wette?"
+          ? showStandings
+            ? "Neue Plätze. Bereit für die nächste Frage?"
+            : "Coins verteilt. Zeit für den Zwischenstand."
           : "Alle da? Dann kann’s losgehen.";
   return (
     <div className="host-dock">
@@ -88,6 +100,14 @@ export function HostDock({ state, seconds, busy, action, onPrepare }: Props) {
                 >
                   <Sparkles size={18} /> Auflösen & auszahlen
                 </button>
+              ) : round?.status === "revealed" && !showStandings ? (
+                <button
+                  className="button"
+                  disabled={busy}
+                  onClick={onStandings}
+                >
+                  <Trophy size={18} /> Zwischenstand zeigen
+                </button>
               ) : next ? (
                 <button
                   className="button"
@@ -110,7 +130,7 @@ export function HostDock({ state, seconds, busy, action, onPrepare }: Props) {
                   <Trophy size={18} /> Finale starten
                 </button>
               )}
-              {!active && next && (
+              {!active && next && (!round || showStandings) && (
                 <button
                   className="button secondary small"
                   disabled={busy}

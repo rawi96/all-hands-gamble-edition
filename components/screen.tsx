@@ -1,48 +1,56 @@
 "use client";
 import { GameAtmosphere, RoundProgress } from "./game-atmosphere";
-import { Celebration, Podium, LobbyWall, RoundTransition } from "./effects";
+import { Celebration, LobbyWall, RoundTransition } from "./effects";
 import { QRCodeSVG } from "qrcode.react";
-import { Check, Users, Flame, Trophy } from "lucide-react";
+import { Check, Users } from "lucide-react";
 import type { Snapshot } from "@/lib/types";
-import { Leaderboard } from "./shared";
+import { LiveArena, StandingsShow } from "./host-show";
 
 // This component receives only the public projection of the host state.
 export function GameBoard({
   state,
   seconds,
   origin,
+  showStandings = false,
 }: {
   state: Snapshot;
   seconds: number;
   origin: string;
+  showStandings?: boolean;
 }) {
   const code = state.game.code;
   const round = state.round;
   const open = round?.status === "open" && seconds > 0;
   const reveal = round?.status === "revealed";
   const finished = state.game.status === "finished";
+  const standings = reveal && showStandings;
   return (
     <div
       className={`screen host-board phase-${finished ? "podium" : !round ? "lobby" : reveal ? "reveal" : open ? "open" : "locked"}`}
     >
       <GameAtmosphere />
-      <RoundTransition state={state} />
+      {!standings && <RoundTransition state={state} />}
       <Celebration
         trigger={finished ? "finale" : reveal ? round?.id : undefined}
         bigCelebration={finished}
       />
       <div className="ambient-orb orb-a" />
       <div className="ambient-orb orb-b" />
-      <div className="screen-layout">
+      <div
+        className={`screen-layout ${round || finished ? "show-layout" : ""}`}
+      >
+        {(round || finished) && (
+          <div className="stage-room-code">
+            BETOOT <b>{code}</b>
+          </div>
+        )}
         <section className="stage">
-          {finished ? (
-            <div className="finale">
-              <Trophy size={76} />
-              <span className="eyebrow">DAS IST EUER MOMENT.</span>
-              <h1 className="finale-title">DIE TOP 3!</h1>
-              <Podium players={state.leaderboard} />
-              <p>Gut geraten. Mutig gesetzt. Gemeinsam gefeiert.</p>
-            </div>
+          {finished || standings ? (
+            <StandingsShow
+              key={`${round?.id}-${finished}`}
+              state={state}
+              final={finished}
+            />
           ) : !round ? (
             <div className="lobby-stage">
               <span className="eyebrow">EURE RUNDE WARTET</span>
@@ -57,7 +65,7 @@ export function GameBoard({
               </div>
               <div className="lobby-stats">
                 <Users size={23} />
-                <b>{state.playerCount}</b> Players am Tisch
+                <b>{state.playerCount}</b> Mitspielende sind dabei
               </div>
               <LobbyWall players={state.leaderboard} />
             </div>
@@ -113,53 +121,39 @@ export function GameBoard({
                   </p>
                 </div>
               ) : (
-                <div className="round-stats">
-                  <span>
-                    <Users size={20} />
-                    <strong>{state.betCount}</strong> / {state.playerCount}{" "}
-                    gesetzt
-                  </span>
-                  <span>
-                    <Flame size={20} />
-                    <strong>{state.allInCount}</strong> ALL IN
-                  </span>
-                  {!open && (
-                    <span className="muted">
-                      Einsätze stehen. Zeit fürs Update.
-                    </span>
-                  )}
-                </div>
+                <LiveArena state={state} open={!!open} />
               )}
             </div>
           )}
         </section>
-        <aside className="screen-sidebar">
-          <section className="panel qr-panel">
-            <span className="section-label">SPIEL MIT!</span>
-            {origin && (
-              <div className="qr">
-                <QRCodeSVG
-                  value={`${origin}/play/${code}`}
-                  size={152}
-                  level="M"
-                />
-              </div>
-            )}
-            <div className="room-code">{code}</div>
-            <p className="fine">
-              {!round && !finished
-                ? "QR scannen oder Code eingeben"
-                : "Code auf der Startseite eingeben"}
-            </p>
-            {origin && (
-              <a className="join-url" href={`${origin}/play/${code}`}>
-                {origin.replace(/^https?:\/\//, "")}
-              </a>
-            )}
-          </section>
-          {state && <Leaderboard state={state} limit={5} />}
-          <p className="fine center">ZUSAMMEN MACHT’S BETOOT.</p>
-        </aside>
+        {!round && !finished && (
+          <aside className="screen-sidebar">
+            <section className="panel qr-panel">
+              <span className="section-label">SPIEL MIT!</span>
+              {origin && (
+                <div className="qr">
+                  <QRCodeSVG
+                    value={`${origin}/play/${code}`}
+                    size={152}
+                    level="M"
+                  />
+                </div>
+              )}
+              <div className="room-code">{code}</div>
+              <p className="fine">
+                {!round && !finished
+                  ? "QR scannen oder Code eingeben"
+                  : "Code auf der Startseite eingeben"}
+              </p>
+              {origin && (
+                <a className="join-url" href={`${origin}/play/${code}`}>
+                  {origin.replace(/^https?:\/\//, "")}
+                </a>
+              )}
+            </section>
+            <p className="fine center">ZUSAMMEN MACHT’S BETOOT.</p>
+          </aside>
+        )}
       </div>
     </div>
   );

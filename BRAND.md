@@ -50,3 +50,7 @@ Eigene, synthetisierte Töne begleiten Beitritt, Einsatz, Countdown, Auflösung 
 - **Mitspieler:innen:** Spielcode eingeben, Avatar wählen, Antworten und Einsätze festlegen.
 
 Ein Button hat eine klare Aufgabe. Der Spielcode lädt zum Mitspielen ein; er gibt keine Rechte zur Spielleitung.
+
+## Character crew
+
+36 original, code-native SVG puppets replace platform-dependent emoji avatars. Chunky navy outlines, pastel bodies, off-centre pupils, tiny blush marks and exaggerated silhouettes make them recognisable on phones and shared screens. The same character follows a player from selection to lobby, activity stream and podium. Names range from Disco-Gurke and Toast-Orakel to Mono Lisa and Chaos-Knödel. No paid rarity, random rewards or external asset requests.

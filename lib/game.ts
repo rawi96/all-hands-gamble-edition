@@ -451,11 +451,22 @@ export async function snapshot(
     const stats = active
       ? (
           await client.query(
-            "SELECT COUNT(*)::int AS n,COUNT(*) FILTER(WHERE all_in)::int AS all_in FROM bets WHERE round_id=$1",
+            "SELECT COUNT(*)::int AS n,COUNT(*) FILTER(WHERE all_in)::int AS all_in,COALESCE(SUM(stake),0)::bigint AS total_stake FROM bets WHERE round_id=$1",
             [active.id],
           )
         ).rows[0]
       : { n: 0, all_in: 0 };
+    const recentBets =
+      host && active
+        ? (
+            await client.query(
+              `SELECT b.id,p.name,p.avatar,b.stake,b.all_in AS "allIn"
+           FROM bets b JOIN players p ON p.id=b.player_id
+           WHERE b.round_id=$1 ORDER BY b.created_at DESC,b.id DESC LIMIT 5`,
+              [active.id],
+            )
+          ).rows
+        : [];
     return {
       serverTime: Date.now(),
       game: { code: game.code, title: game.title, status: game.status },
@@ -465,6 +476,14 @@ export async function snapshot(
       playerCount: players.length,
       betCount: stats.n,
       allInCount: stats.all_in,
+      ...(host
+        ? {
+            hostStats: {
+              totalStake: Number(stats.total_stake || 0),
+              recentBets,
+            },
+          }
+        : {}),
       me,
       bet,
       host,
